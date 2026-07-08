@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genesis — If you can think it, we can create it.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0C0A1A; --indigo:#5B5BF5; --violet:#A855F7; --magenta:#EC4899; --amber:#F59E0B;
+    --paper:#FBFAFC; --muted:#6B6B76;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth; background:#0C0A1A; overscroll-behavior:none;}
+  #gl{position:fixed; inset:0; width:100%; height:100%; z-index:-2; display:block;}
+  body{font-family:Inter,'Helvetica Neue',Arial,sans-serif; color:var(--ink); line-height:1.6; -webkit-font-smoothing:antialiased; position:relative; background:transparent;}
+  a{color:inherit; text-decoration:none;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 28px;}
+
+  /* fixed, scroll-reactive gradient — no motion; colors shift as you scroll */
+  /* dither overlay to keep the day-arc gradient smooth (no banding) */
+  #bgnoise{position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:0.08; mix-blend-mode:soft-light;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");}
+  .gtext{background:linear-gradient(90deg,#7E8BFF,#C15CFF,#FF5C9E,#FFB347); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 1px 7px rgba(0,0,0,0.45));}
+
+  /* NAV */
+  nav{position:fixed; top:0; left:0; right:0; z-index:50; display:flex; align-items:center; justify-content:space-between; padding:20px 32px; transition:background .35s ease, backdrop-filter .35s ease, padding .35s ease, box-shadow .35s ease;}
+  nav.scrolled{background:rgba(14,10,30,0.5); backdrop-filter:blur(20px) saturate(1.4); padding:13px 32px; box-shadow:0 10px 34px rgba(0,0,0,0.3);}
+  nav.scrolled:after{content:''; position:absolute; left:0; right:0; bottom:0; height:1.5px; background:linear-gradient(90deg,#5B5BF5,#A855F7,#EC4899,#F59E0B); opacity:.85;}
+  nav .brand{font-size:24px; font-weight:600; letter-spacing:-1px; color:#fff;}
+  nav .links{display:flex; align-items:center; gap:28px; font-size:14px; color:rgba(255,255,255,0.82);}
+  nav .links a:hover{color:#fff;}
+  nav .pill{background:#fff; color:#15131c; padding:10px 20px; border-radius:999px; font-weight:600; font-size:14px; transition:transform .15s ease, opacity .2s ease;}
+  nav .pill:hover{transform:translateY(-1px); opacity:0.9;}
+  @media(max-width:720px){ nav .links a.hidem{display:none;} }
+
+  /* HERO */
+  .hero{position:relative; overflow:hidden; background:rgba(12,9,24,0.12); color:#fff; min-height:100vh; display:flex; align-items:center; justify-content:center; text-align:center; padding:140px 28px 90px;}
+  .hero .glow{position:absolute; inset:0; background:linear-gradient(180deg, rgba(8,6,20,0.34), rgba(8,6,20,0) 46%);}
+  .hero .inner{position:relative; max-width:820px;}
+  .hero .label{font-size:13px; letter-spacing:4px; text-transform:uppercase; color:rgba(255,255,255,0.55); margin-bottom:26px;}
+  .hero h1{font-size:68px; font-weight:600; letter-spacing:-2.5px; line-height:1.02; text-shadow:0 2px 24px rgba(0,0,0,0.4);}
+  .hero .word{font-size:64px; font-weight:600; letter-spacing:-2.5px; margin-bottom:18px;}
+  .hero p.sub{font-size:19px; font-weight:400; color:rgba(255,255,255,0.92); margin-top:20px; text-shadow:0 1px 16px rgba(0,0,0,0.4);}
+  @media(max-width:720px){ .hero h1{font-size:42px;} .hero .word{font-size:46px;} }
+
+  /* CREATE BAR */
+  .createwrap{margin:44px auto 0; max-width:600px;}
+  .createbar{background:rgba(255,255,255,0.09); border:1px solid rgba(255,255,255,0.22); border-radius:18px; padding:10px 10px 10px 24px; display:flex; align-items:center; gap:12px; backdrop-filter:blur(12px); transition:all .3s ease;}
+  .createbar input{flex:1; background:transparent; border:none; outline:none; color:#fff; font-family:inherit; font-size:19px; font-weight:300; padding:14px 0;}
+  .createbar input::placeholder{color:rgba(255,255,255,0.5);}
+  .createbar button{background:#fff; color:var(--ink); border:none; font-family:inherit; font-size:15px; font-weight:700; padding:16px 30px; border-radius:12px; cursor:pointer; white-space:nowrap; transition:transform .15s ease;}
+  .createbar button:hover{transform:translateY(-1px);}
+  .stephint{font-size:13px; color:rgba(255,255,255,0.6); margin-top:14px; min-height:18px; transition:opacity .35s;}
+  .examples{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:18px; align-items:center;}
+  .examples .extag{font-size:12.5px; color:rgba(255,255,255,0.5); margin-right:2px;}
+  .examples .ex{background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); color:rgba(255,255,255,0.9); font-family:inherit; font-size:12.5px; padding:7px 13px; border-radius:999px; cursor:pointer; transition:background .2s, border-color .2s, transform .15s;}
+  .examples .ex:hover{background:rgba(255,255,255,0.16); border-color:rgba(255,255,255,0.42); transform:translateY(-1px);}
+
+  /* CONFIRMATION */
+  .confirm{display:none; position:relative; max-width:600px; margin:44px auto 0; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:40px 36px; text-align:left; backdrop-filter:blur(12px);}
+  .confirm .spark{width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#5B5BF5,#EC4899,#F59E0B); box-shadow:0 0 30px rgba(236,72,153,0.6); margin-bottom:20px;}
+  .confirm h3{font-size:24px; font-weight:600; letter-spacing:-0.5px; margin-bottom:12px;}
+  .confirm p{font-size:16px; color:rgba(255,255,255,0.82); font-weight:300;}
+  .confirm .idea{color:#fff; font-weight:500;}
+  .confirm .again{margin-top:22px; display:inline-block; font-size:14px; font-weight:600; color:#fff; border-bottom:1px solid rgba(255,255,255,0.4); cursor:pointer; padding-bottom:2px;}
+
+  /* SECTIONS */
+  section.block{padding:100px 0;}
+  .kicker{font-size:13px; letter-spacing:3px; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:18px;}
+  h2.big{font-size:44px; font-weight:600; letter-spacing:-1.5px; line-height:1.1; max-width:720px;}
+  .lead{font-size:19px; color:#3a3a44; max-width:640px; margin-top:20px; font-weight:300;}
+
+  /* manifesto */
+  .manifesto{background:rgba(12,9,24,0.16); color:#fff; position:relative; overflow:hidden;}
+  .manifesto .inner{position:relative;}
+  .manifesto h2{font-size:40px; font-weight:500; letter-spacing:-1px; line-height:1.25; max-width:820px; text-shadow:0 2px 24px rgba(0,0,0,0.4);}
+  .manifesto h2 em{font-style:normal;}
+
+  /* steps */
+  .steps{display:grid; grid-template-columns:repeat(4,1fr); gap:24px; margin-top:56px;}
+  .step .n{font-size:14px; font-weight:700; color:var(--magenta); margin-bottom:14px;}
+  .step h4{font-size:18px; font-weight:600; margin-bottom:8px; letter-spacing:-0.3px;}
+  .step p{font-size:14px; color:var(--muted);}
+  @media(max-width:820px){ .steps{grid-template-columns:1fr 1fr;} }
+
+  /* build cards */
+  .builds{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:56px;}
+  .bcard{position:relative; overflow:hidden; background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:20px; padding:34px 30px; transition:transform .25s ease, box-shadow .25s ease; cursor:pointer;}
+  .bcard::before{content:''; position:absolute; top:0; left:0; width:100%; height:3px; background:linear-gradient(90deg,#5B5BF5,#A855F7,#EC4899,#F59E0B); opacity:0; transition:opacity .35s ease;}
+  .bcard:hover{transform:translateY(-4px); box-shadow:0 18px 44px rgba(0,0,0,0.09);}
+  .bcard:hover::before{opacity:0.85;}
+  .bcard .open{font-size:13px; font-weight:600; color:#15131c; margin-top:16px; opacity:0.5; transition:opacity .2s;}
+  .bcard:hover .open{opacity:1;}
+
+  /* MODAL */
+  .modal-overlay{position:fixed; inset:0; z-index:200; background:rgba(10,8,20,0.66); backdrop-filter:blur(7px); display:none; align-items:center; justify-content:center; padding:18px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:#fff; border-radius:22px; width:100%; max-width:1060px; max-height:94vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 30px 90px rgba(0,0,0,0.5); animation:modalin .26s cubic-bezier(.2,.7,.3,1);}
+  @keyframes modalin{from{opacity:0; transform:translateY(14px) scale(.98)} to{opacity:1; transform:none}}
+  .modal-head{display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid rgba(0,0,0,0.07); flex-shrink:0;}
+  .modal-head .mdot{width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,#5B5BF5,#EC4899,#F59E0B); flex-shrink:0;}
+  .modal-head .mt{flex:1;}
+  .modal-head .mt .tag{font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted);}
+  .modal-head .mt .title{font-size:16px; font-weight:600; letter-spacing:-0.3px; color:var(--ink);}
+  .modal-head .x{cursor:pointer; font-size:22px; color:var(--muted); line-height:1; border:none; background:rgba(0,0,0,0.05); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
+  .modal-head .x:hover{background:rgba(0,0,0,0.1);}
+  .modal-body{padding:0; overflow:auto; background:#fff;}
+  /* product-page shell inside demos */
+  .ph{color:#15131c;}
+  .ph-hero{padding:34px 40px 30px; color:#fff; position:relative; overflow:hidden;}
+  .ph-hero .cat{font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; opacity:.85;}
+  .ph-hero h1{font-size:34px; font-weight:700; letter-spacing:-1px; margin:8px 0 6px;}
+  .ph-hero .tl{font-size:16px; opacity:.92; max-width:560px; font-weight:400;}
+  .ph-hero .meta{display:flex; gap:22px; margin-top:20px; flex-wrap:wrap;}
+  .ph-hero .meta div{font-size:12.5px; opacity:.9;}
+  .ph-hero .meta b{display:block; font-size:18px; font-weight:700;}
+  .ph-body{padding:30px 40px; background:#F4F3F8;}
+  .ph-feats{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; padding:0 40px 34px; background:#F4F3F8;}
+  .ph-feat{background:#fff; border:1px solid rgba(0,0,0,0.07); border-radius:14px; padding:16px 18px;}
+  .ph-feat .ft{font-size:13.5px; font-weight:700; color:#15131c;}
+  .ph-feat .fd{font-size:12.5px; color:var(--muted); margin-top:3px;}
+  @media(max-width:720px){ .ph-hero,.ph-body,.ph-feats{padding-left:20px; padding-right:20px;} .ph-feats{grid-template-columns:1fr;} .ph-hero h1{font-size:26px;} }
+  .modal-foot{font-size:12.5px; color:var(--muted); text-align:center; padding:12px 20px; border-top:1px solid rgba(0,0,0,0.07); background:#fff; flex-shrink:0;}
+  .modal-foot b{color:var(--ink);}
+  @media(max-width:560px){ .modal-body{padding:16px;} }
+  .bcard h4{font-size:19px; font-weight:600; margin-bottom:7px; letter-spacing:-0.4px; color:#15131c;}
+  .bcard p{font-size:14.5px; color:var(--muted); line-height:1.55;}
+  @media(max-width:820px){ .builds{grid-template-columns:1fr;} }
+
+  /* CTA */
+  .cta{position:relative; overflow:hidden; background:rgba(12,9,24,0.14); color:#fff; text-align:center; padding:120px 28px;}
+  .cta .inner{position:relative;}
+  .cta h2{font-size:52px; font-weight:600; letter-spacing:-2px; margin-bottom:16px;}
+  .cta p{font-size:18px; color:rgba(255,255,255,0.8); font-weight:300; margin-bottom:36px;}
+  .cta a.pill{background:#fff; color:#15131c; padding:17px 36px; border-radius:999px; font-weight:600; font-size:16px; display:inline-block; transition:transform .15s ease, opacity .2s ease;}
+  .cta a.pill:hover{transform:translateY(-2px); opacity:0.9;}
+
+  /* footer */
+  footer{background:var(--ink); color:rgba(255,255,255,0.6); padding:50px 28px; border-top:1px solid rgba(255,255,255,0.08);}
+  footer .row{max-width:1080px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;}
+  footer .brand{font-size:22px; font-weight:600; letter-spacing:-1px; color:#fff;}
+  footer .meta{font-size:13px;}
+  footer a{color:#fff;}
+
+  /* HYPE REEL */
+  .reel{position:relative; overflow:hidden; background:rgba(9,7,18,0.55); border-top:1px solid rgba(255,255,255,0.07); border-bottom:1px solid rgba(255,255,255,0.07); padding:58px 0 64px;}
+  .reel .rhead{text-align:center; margin-bottom:32px; padding:0 24px;}
+  .reel .rkick{font-size:12px; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:700;}
+  .reel .rline{font-size:32px; font-weight:600; letter-spacing:-1px; color:#fff; margin-top:12px; height:46px; line-height:46px; white-space:nowrap; overflow:hidden;}
+  .reel .rot{background:linear-gradient(90deg,#7E8BFF,#C15CFF,#FF5C9E,#FFB347); -webkit-background-clip:text; background-clip:text; color:transparent; display:inline-block; vertical-align:top; transition:opacity .45s ease, transform .45s ease; will-change:opacity,transform;}
+  .reel .rot.out{opacity:0; transform:translateY(14px);}
+  .marquee{overflow:hidden; -webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent); mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);}
+  .marquee + .marquee{margin-top:16px;}
+  .track{display:flex; width:max-content; will-change:transform; backface-visibility:hidden;}
+  .track.l{animation:scrollL 55s linear infinite;}
+  .track.r{animation:scrollR 62s linear infinite;}
+  .marquee:hover .track{animation-play-state:paused;}
+  @keyframes scrollL{from{transform:translate3d(0,0,0)} to{transform:translate3d(-50%,0,0)}}
+  @keyframes scrollR{from{transform:translate3d(-50%,0,0)} to{transform:translate3d(0,0,0)}}
+  .tile{flex-shrink:0; width:236px; height:134px; margin-right:16px; border-radius:16px; overflow:hidden; position:relative; display:flex; flex-direction:column; justify-content:flex-end; padding:15px; color:#fff; border:1px solid rgba(255,255,255,0.12);}
+  .tile .chip{position:absolute; top:12px; left:12px; z-index:2; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.28); backdrop-filter:blur(4px); border-radius:999px; padding:4px 9px; font-size:10px; font-weight:700; letter-spacing:.5px;}
+  .tile .chip .cd{width:6px; height:6px; border-radius:50%; background:#4ade80; box-shadow:0 0 7px #4ade80;}
+  .tile .tlabel{font-size:15px; font-weight:700; position:relative; z-index:2; letter-spacing:-.2px;}
+  .tile .tsub{font-size:11.5px; opacity:.85; position:relative; z-index:2; margin-top:1px;}
+  .tile:before{content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 70% 15%, rgba(255,255,255,0.18), transparent 55%); z-index:1;}
+  @media(max-width:720px){ .reel .rline{font-size:24px;} .tile{width:200px; height:120px;} }
+
+  /* GLIMPSE BENTO */
+  .glimpse{position:relative; overflow:hidden; padding:118px 0 128px; background:rgba(9,7,17,0.55); color:#fff;}
+  .gkick{font-size:13px; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.5); font-weight:700; text-align:center;}
+  .gtitle{text-align:center; font-size:46px; font-weight:600; letter-spacing:-1.8px; line-height:1.08; margin:16px 0 56px; text-shadow:0 2px 24px rgba(0,0,0,0.35);}
+  .bento{display:grid; grid-template-columns:repeat(4,1fr); grid-auto-rows:158px; gap:16px;
+    grid-template-areas:"feat feat b c" "feat feat d e" "wide wide wide wide";}
+  .bento > a{position:relative; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:24px; -webkit-backdrop-filter:blur(24px); backdrop-filter:blur(24px); padding:28px; display:flex; flex-direction:column; justify-content:flex-end; box-shadow:inset 0 1px 0 rgba(255,255,255,0.09), 0 22px 46px rgba(0,0,0,0.26); transition:transform .3s ease, background .3s ease, border-color .3s ease; color:#fff;}
+  .bento > a:hover{transform:translateY(-4px); background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.28);}
+  .bento-feat{justify-content:center; background:rgba(255,255,255,0.09) !important;}
+  .bento-cell{justify-content:space-between !important;}
+  .bc-vis{line-height:0;}
+  .bf-label{font-size:12px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.55); font-weight:700; margin-bottom:16px;}
+  .bf-line{font-size:34px; font-weight:600; letter-spacing:-1px; line-height:1.12; min-height:46px; overflow:hidden;}
+  .bf-line .rot{display:inline-block; background:linear-gradient(90deg,#7E8BFF,#C15CFF,#FF5C9E,#FFB347); -webkit-background-clip:text; background-clip:text; color:transparent; transition:opacity .45s ease, transform .45s ease;}
+  .bf-line .rot.out{opacity:0; transform:translateY(16px);}
+  .bf-sub{font-size:17px; color:rgba(255,255,255,0.72); margin-top:18px;}
+  .bc-k{font-size:18px; font-weight:600; letter-spacing:-0.3px;}
+  .bc-d{font-size:13.5px; color:rgba(255,255,255,0.62); margin-top:5px; line-height:1.45;}
+  .bento-wide .bc-k{font-size:20px;}
+  .bento-wide .bc-d{font-size:14.5px; max-width:560px;}
+  @media(max-width:860px){
+    .gtitle{font-size:34px;}
+    .bento{grid-template-columns:1fr 1fr; grid-auto-rows:150px; grid-template-areas:"feat feat" "b c" "d e" "wide wide";}
+    .bf-line{font-size:26px;}
+  }
+  @media(max-width:520px){
+    .bento{grid-template-columns:1fr; grid-template-areas:"feat" "b" "c" "d" "e" "wide";}
+  }
+
+  /* FREE CALL */
+  .freecall{position:relative; padding:104px 0; background:rgba(12,9,24,0.2); border-top:1px solid rgba(255,255,255,0.06); border-bottom:1px solid rgba(255,255,255,0.06); text-align:center;}
+  .fc-num{font-size:78px; font-weight:700; letter-spacing:-3px; line-height:1; background:linear-gradient(90deg,#fff,#E3AAFF); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .fc-h{font-size:38px; font-weight:600; letter-spacing:-1.2px; color:#fff; margin:14px 0 16px; text-shadow:0 2px 20px rgba(0,0,0,0.3);}
+  .fc-p{font-size:18px; color:rgba(255,255,255,0.82); max-width:600px; margin:0 auto 34px; font-weight:300; line-height:1.6;}
+  .fc-cta{display:inline-block; background:#fff; color:#15131c; padding:16px 34px; border-radius:999px; font-weight:600; font-size:16px; transition:transform .15s, opacity .2s;}
+  .fc-cta:hover{transform:translateY(-2px); opacity:0.9;}
+  @media(max-width:720px){ .fc-num{font-size:60px;} .fc-h{font-size:28px;} }
+
+  /* COMPARISON */
+  .compare{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:48px;}
+  .compare .col{border-radius:20px; padding:30px;}
+  .compare .old{background:#F4F4F7; border:1px solid rgba(0,0,0,0.07);}
+  .compare .new{background:linear-gradient(160deg,#1b1433,#2c1d49); color:#fff; border:1px solid rgba(255,255,255,0.12);}
+  .compare .ch{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:18px;}
+  .compare .old .ch{color:#9a9aa6;}
+  .compare .new .ch{color:#E3AAFF;}
+  .compare ul{list-style:none;}
+  .compare li{position:relative; padding:9px 0 9px 30px; font-size:15px;}
+  .compare .old li{color:#6a6a73;}
+  .compare .new li{color:rgba(255,255,255,0.94);}
+  .compare li:before{position:absolute; left:0; top:8px; font-weight:700; font-size:15px;}
+  .compare .old li:before{content:'✕'; color:#C98A8A;}
+  .compare .new li:before{content:'✓'; color:#4ade80;}
+  @media(max-width:720px){ .compare{grid-template-columns:1fr;} }
+
+  /* URGENCY */
+  .urgency{background:rgba(12,9,24,0.22); color:#fff; text-align:center; position:relative; overflow:hidden;}
+  .urgency h2{font-size:46px; font-weight:600; letter-spacing:-1.8px; line-height:1.08; margin:0 auto; max-width:780px; text-shadow:0 2px 24px rgba(0,0,0,.42);}
+  .urgency p{font-size:18px; color:rgba(255,255,255,0.86); max-width:670px; margin:22px auto 32px; font-weight:300;}
+  .urgency a.pill{background:#fff; color:#15131c; padding:15px 32px; border-radius:999px; font-weight:600; font-size:15px; display:inline-block; transition:transform .15s, opacity .2s;}
+  .urgency a.pill:hover{transform:translateY(-2px); opacity:0.9;}
+
+  /* REVIEWS */
+  .reviews{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:48px;}
+  .rcard{background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:18px; padding:26px; box-shadow:0 8px 26px rgba(0,0,0,0.04);}
+  .rcard .stars{color:#F59E0B; font-size:15px; letter-spacing:2px; margin-bottom:14px;}
+  .rcard .quote{font-size:15px; color:#33333c; line-height:1.62;}
+  .rcard .who{display:flex; align-items:center; gap:11px; margin-top:20px;}
+  .rcard .av{width:38px; height:38px; border-radius:50%; flex-shrink:0;}
+  .rcard .nm{font-size:14px; font-weight:700; color:#111;}
+  .rcard .rl{font-size:12px; color:var(--muted);}
+  .rcard .pdot{width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#5B5BF5,#EC4899,#F59E0B); margin-bottom:16px;}
+  @media(max-width:820px){ .reviews{grid-template-columns:1fr;} }
+
+  /* FAQ */
+  .faq{max-width:760px; margin:44px auto 0;}
+  .faq-item{border-bottom:1px solid rgba(0,0,0,0.09);}
+  .faq-q{display:flex; justify-content:space-between; align-items:center; gap:16px; padding:22px 4px; cursor:pointer; font-size:17px; font-weight:600; color:#15131c;}
+  .faq-q .ico{flex-shrink:0; width:20px; height:20px; position:relative; transition:transform .3s ease;}
+  .faq-item.open .faq-q .ico{transform:rotate(45deg);}
+  .faq-q .ico:before{content:''; position:absolute; left:50%; top:0; bottom:0; width:2px; transform:translateX(-50%); background:#7C5BF5; border-radius:2px;}
+  .faq-q .ico:after{content:''; position:absolute; top:50%; left:0; right:0; height:2px; transform:translateY(-50%); background:#7C5BF5; border-radius:2px;}
+  .faq-a{max-height:0; overflow:hidden; transition:max-height .3s ease;}
+  .faq-a p{font-size:15px; color:var(--muted); line-height:1.65; padding:0 4px 22px; max-width:520px;}
+  .faq-item.open .faq-a{max-height:260px;}
+  .faq-q:hover{color:#7C5BF5;}
+  .faq-wrap{display:grid; grid-template-columns:0.85fr 1.15fr; gap:52px; align-items:start;}
+  .faq-wrap .faq{margin-top:0;}
+  .faq-aside .lead{font-size:16px;}
+  .faq-cta{display:inline-block; margin-top:20px; background:#15131c; color:#fff; padding:13px 26px; border-radius:999px; font-weight:600; font-size:14px; transition:transform .15s, opacity .2s;}
+  .faq-cta:hover{transform:translateY(-1px); opacity:0.85;}
+  @media(max-width:820px){ .faq-wrap{grid-template-columns:1fr; gap:20px;} }
+
+  /* WHY GENESIS cards */
+  .wgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:48px;}
+  .wcard{position:relative; overflow:hidden; background:#fff; border:1px solid rgba(0,0,0,0.07); border-radius:20px; padding:34px 30px;}
+  .wcard::before{content:''; position:absolute; top:0; left:0; width:100%; height:3px; background:linear-gradient(90deg,#5B5BF5,#A855F7,#EC4899,#F59E0B); opacity:0; transition:opacity .35s ease;}
+  .wcard:hover::before{opacity:0.85;}
+  .wt{font-size:19px; font-weight:600; color:#15131c; margin-bottom:9px; letter-spacing:-0.4px;}
+  .wd{font-size:15px; color:var(--muted); line-height:1.62;}
+  @media(max-width:820px){ .wgrid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<nav>
+  <div class="brand">genesis<span class="gtext">.</span></div>
+  <div class="links">
+    <a href="#how" class="hidem">How it works</a>
+    <a href="#build" class="hidem">What you can build</a>
+    <a href="#top" class="pill">Start creating</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <div class="glow"></div>
+  <div class="inner">
+    <div class="label">Day One</div>
+    <div class="word">genesis<span class="gtext">.</span></div>
+    <h1>If you can think it,<br>we can <span class="gtext">create it.</span></h1>
+    <p class="sub">You bring the idea. We build it with AI. No limits.</p>
+
+    <div class="createwrap" id="createwrap">
+      <form class="createbar" id="createform" autocomplete="off">
+        <input type="text" id="ideaInput" placeholder="What do you want to create?" aria-label="What do you want to create?">
+        <button type="submit" id="createBtn">Create &rarr;</button>
+      </form>
+      <div class="stephint" id="stepHint">Tell us your idea — anything from a rough thought to a full plan.</div>
+      <div class="examples" id="examples">
+        <span class="extag">Try:</span>
+        <button type="button" class="ex">A booking app for my salon</button>
+        <button type="button" class="ex">Automate my invoicing</button>
+        <button type="button" class="ex">An AI assistant for support</button>
+      </div>
+    </div>
+
+    <div class="confirm" id="confirmCard">
+      <div class="spark"></div>
+      <h3 id="confirmH">Your idea is in good hands.</h3>
+      <p>We've got your idea. A real human from Genesis will reach out within one business day to bring it to life.</p>
+      <p style="margin-top:14px;" id="confirmContact"></p>
+      <span class="again" id="startAgain">Start another idea</span>
+    </div>
+  </div>
+</header>
+
+<!-- GLIMPSE (BENTO) -->
+<section class="glimpse" id="reel">
+  <div class="wrap">
+    <div class="gkick">A glimpse of what's possible</div>
+    <h2 class="gtitle">From a simple idea<br>to something remarkable.</h2>
+    <div class="bento">
+      <a class="bento-feat" href="#top" style="grid-area:feat;">
+        <div class="bf-label">You imagine</div>
+        <div class="bf-line"><span class="rot" id="reelRot">an app that books your haircuts.</span></div>
+        <div class="bf-sub">We build it. Whatever it is.</div>
+      </a>
+      <a class="bento-cell" href="#top" style="grid-area:b;">
+        <div class="bc-vis"><svg width="46" height="46" viewBox="0 0 46 46" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.7" stroke-linecap="round"><rect x="15" y="6" width="16" height="34" rx="3.5"/><line x1="20" y1="35" x2="26" y2="35"/><rect x="18.5" y="11" width="9" height="6" rx="1.5" stroke-opacity="0.55"/><line x1="19" y1="22" x2="27" y2="22" stroke-opacity="0.55"/><line x1="19" y1="26" x2="24" y2="26" stroke-opacity="0.55"/></svg></div>
+        <div><div class="bc-k">Apps &amp; products</div><div class="bc-d">Web and mobile, MVP to launch.</div></div>
+      </a>
+      <a class="bento-cell" href="#top" style="grid-area:c;">
+        <div class="bc-vis"><svg width="48" height="46" viewBox="0 0 48 46" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.7" stroke-linejoin="round"><rect x="5" y="9" width="26" height="16" rx="6"/><rect x="21" y="22" width="22" height="14" rx="6" stroke-opacity="0.5"/></svg></div>
+        <div><div class="bc-k">AI agents</div><div class="bc-d">That work like your team.</div></div>
+      </a>
+      <a class="bento-cell" href="#top" style="grid-area:d;">
+        <div class="bc-vis"><svg width="48" height="46" viewBox="0 0 48 46" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.7" stroke-linecap="round"><circle cx="10" cy="23" r="4.5"/><circle cx="24" cy="23" r="4.5"/><circle cx="38" cy="23" r="4.5"/><line x1="14.5" y1="23" x2="19.5" y2="23"/><line x1="28.5" y1="23" x2="33.5" y2="23"/></svg></div>
+        <div><div class="bc-k">Automations</div><div class="bc-d">The busywork, gone.</div></div>
+      </a>
+      <a class="bento-cell" href="#top" style="grid-area:e;">
+        <div class="bc-vis"><svg width="46" height="46" viewBox="0 0 46 46" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="3" stroke-linecap="round"><line x1="10" y1="34" x2="10" y2="24"/><line x1="19" y1="34" x2="19" y2="14"/><line x1="28" y1="34" x2="28" y2="27"/><line x1="37" y1="34" x2="37" y2="18"/></svg></div>
+        <div><div class="bc-k">Dashboards</div><div class="bc-d">Your data, made clear.</div></div>
+      </a>
+      <a class="bento-cell bento-wide" href="#top" style="grid-area:wide;">
+        <div class="bc-vis"><svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7 a10 10 0 0 1 6.2 17.9 c-1.4 1.1-2.2 2.4-2.2 4.1 h-8 c0-1.7-0.8-3-2.2-4.1 A10 10 0 0 1 22 7 Z"/><line x1="18.5" y1="34" x2="25.5" y2="34"/><line x1="20" y1="37.5" x2="24" y2="37.5"/></svg></div>
+        <div><div class="bc-k">…and things no one's built yet.</div><div class="bc-d">The ideas that don't fit a category — those are our favorite.</div></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- MANIFESTO -->
+<section class="block manifesto">
+  <div class="wrap inner">
+    <div class="kicker" style="color:rgba(255,255,255,0.6);">The idea</div>
+    <h2>Every great thing starts as an idea. Most die there — not because they were impossible, but because building them seemed too difficult. <em class="gtext">Genesis exists to end that.</em></h2>
+  </div>
+</section>
+
+<!-- FREE CALL -->
+<section class="freecall">
+  <div class="wrap">
+    <div class="fc-num">Free</div>
+    <h2 class="fc-h">Your first call is on us.</h2>
+    <p class="fc-p">Tell us your idea and we'll scope it out together — what it takes, what it costs, what's possible. No commitment, no cost. Just a real conversation about what we could build for you.</p>
+    <a href="#top" class="fc-cta">Book your free call</a>
+  </div>
+</section>
+
+<!-- WHAT YOU CAN BUILD -->
+<section class="block" id="build" style="background:var(--paper);">
+  <div class="wrap">
+    <div class="kicker">What you can build</div>
+    <h2 class="big">If it can be imagined, it can be built.</h2>
+    <p class="lead">A tiny sample of a limitless range. Bring us yours.</p>
+    <p class="lead" style="margin-top:-6px; margin-bottom:8px; font-size:15px; color:var(--indigo); font-weight:600;">Click any card to open an interactive demo.*</p>
+    <div class="builds">
+      <div class="bcard" data-demo="app"><h4>Apps &amp; products</h4><p>Web and mobile apps, MVPs, full products — from idea to launch-ready.</p><div class="open">View live demo &rarr;</div></div>
+      <div class="bcard" data-demo="auto"><h4>Automations &amp; workflows</h4><p>Kill the busywork. Systems that run your operations for you.</p><div class="open">View live demo &rarr;</div></div>
+      <div class="bcard" data-demo="agent"><h4>AI agents &amp; assistants</h4><p>Custom AI that works the way your business actually works.</p><div class="open">View live demo &rarr;</div></div>
+      <div class="bcard" data-demo="site"><h4>Websites &amp; tools</h4><p>Beautiful sites and internal tools that do exactly what you need.</p><div class="open">View live demo &rarr;</div></div>
+      <div class="bcard" data-demo="social"><h4>Social media engine</h4><p>AI that writes, designs, and schedules a month of content in minutes.</p><div class="open">View live demo &rarr;</div></div>
+      <div class="bcard" data-demo="data"><h4>Data &amp; dashboards</h4><p>Turn scattered data into something you can actually see and use.</p><div class="open">View live demo &rarr;</div></div>
+      <div class="bcard" data-demo="novel"><h4>Something no one's built</h4><p>The idea that doesn't fit a category yet. Those are our favorite.</p><div class="open">View live demo &rarr;</div></div>
+    </div>
+    <p style="font-size:12.5px; color:var(--muted); margin-top:24px;">* Illustrative examples of what Genesis can build — not actual products or clients. Your build is made from scratch, for you.</p>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="block" id="how" style="background:#fff; border-top:1px solid rgba(0,0,0,0.06);">
+  <div class="wrap">
+    <div class="kicker">How it works</div>
+    <h2 class="big">From a spark of an idea to a real, working thing — without you lifting a finger.</h2>
+    <div class="steps">
+      <div class="step"><div class="n">01</div><h4>Bring the idea</h4><p>A problem, a product, a "wouldn't it be cool if." Rough or fully formed — we take it from anywhere.</p></div>
+      <div class="step"><div class="n">02</div><h4>We scope it</h4><p>We figure out exactly what it takes and shape the fastest path from thought to real.</p></div>
+      <div class="step"><div class="n">03</div><h4>We build it with AI</h4><p>Concept to working thing — apps, tools, automations, whatever your idea demands.</p></div>
+      <div class="step"><div class="n">04</div><h4>You get something real</h4><p>Delivered, polished, and yours. Then we do it again.</p></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- URGENCY -->
+<section class="block urgency">
+  <div class="wrap inner">
+    <div class="kicker" style="color:rgba(255,255,255,0.6); text-align:center;">The moment</div>
+    <h2>AI isn't coming. It's already here.</h2>
+    <p>Every day, businesses are shipping things that used to take whole teams and years. The gap between the ones who use AI and the ones who don't is widening — fast. If you're not building, you're falling behind. The best time to start was yesterday. The next best is right now.</p>
+    <a href="#top" class="pill">Don't get left behind &rarr;</a>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="block" style="background:#fff;">
+  <div class="wrap faq-wrap">
+    <div class="faq-aside">
+      <div class="kicker">FAQ</div>
+      <h2 class="big" style="font-size:40px;">Questions,<br>answered.</h2>
+      <p class="lead">Still curious? Tell us your idea up top and we'll cover everything on a quick, free call.</p>
+      <a href="#top" class="faq-cta">Start creating</a>
+    </div>
+    <div class="faq" id="faq">
+      <div class="faq-item">
+        <div class="faq-q">Do I own what you build?<span class="ico"></span></div>
+        <div class="faq-a"><p>Yes — what we build is made for you. We'll walk through exactly what's included and how it's handed off before we start, so everything's clear from day one.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How much does it cost?<span class="ico"></span></div>
+        <div class="faq-a"><p>It depends on what you're building. We give you one clear quote after a free scoping call — and you approve it before we build a thing.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How long does it take?<span class="ico"></span></div>
+        <div class="faq-a"><p>Far less time than the traditional route. Once we scope your idea, we give you a realistic timeline up front and keep you posted the whole way through.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Do I need to be technical?<span class="ico"></span></div>
+        <div class="faq-a"><p>Not at all. Most people come to us with just an idea or a problem. You describe what you want in plain words — we handle everything technical.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What can you actually build?<span class="ico"></span></div>
+        <div class="faq-a"><p>Apps, websites, internal tools, automations, AI agents, dashboards — and plenty that doesn't fit a category. If you can describe it, there's a good chance we can build it. Not sure? Just ask.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What if it's not what I wanted?<span class="ico"></span></div>
+        <div class="faq-a"><p>You approve the plan before we build, so there are no surprises. And we don't call it done until it's right — we work with you until it is.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How do we get started?<span class="ico"></span></div>
+        <div class="faq-a"><p>Tell us your idea at the top of this page. We'll reach out to set up a free scoping call, figure out exactly what it takes, and take it from there.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="inner">
+    <h2>What will you <span class="gtext">create?</span></h2>
+    <p>No limits. No barriers. Just your idea, brought to life.</p>
+    <a href="#top" class="pill">Start creating</a>
+  </div>
+</section>
+
+<!-- DEMO MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div class="mdot"></div>
+      <div class="mt"><div class="tag" id="mTag">Genesis build</div><div class="title" id="mTitle">Demo</div></div>
+      <button class="x" id="mClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="mBody"></div>
+    <div class="modal-foot">An interactive example of what <b>Genesis</b> can build. Yours would be made from scratch, for you. &nbsp;<a href="#top" id="modalCta" style="color:#fff; background:#15131c; padding:9px 18px; border-radius:999px; font-weight:600; font-size:12.5px; white-space:nowrap; display:inline-block; margin-left:4px;">Start yours &rarr;</a></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="row">
+    <div>
+      <div class="brand">genesis<span class="gtext">.</span></div>
+      <div class="meta" style="margin-top:6px;">If you can think it, we can create it.</div>
+    </div>
+    <div class="meta">
+      <a href="mailto:hello@itsgenesis.ai">hello@itsgenesis.ai</a><br>
+      <span style="opacity:0.6;">&copy; 2026 Genesis. Day one, every day.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var form = document.getElementById('createform');
+  var input = document.getElementById('ideaInput');
+  var btn = document.getElementById('createBtn');
+  var hint = document.getElementById('stepHint');
+  var createwrap = document.getElementById('createwrap');
+  var confirmCard = document.getElementById('confirmCard');
+  var echoIdea = document.getElementById('echoIdea');
+  var echoEmail = document.getElementById('echoEmail');
+  var startAgain = document.getElementById('startAgain');
+
+  var confirmH = document.getElementById('confirmH');
+  var confirmContact = document.getElementById('confirmContact');
+  var examples = document.getElementById('examples');
+
+  var HINT_DEFAULT = 'Tell us your idea — anything from a rough thought to a full plan.';
+  var lead = { idea:'', name:'', email:'' };
+  var step = 'idea';
+  var pTimer = null;
+
+  function isEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+  function isPhone(v){ return v.replace(/[^0-9]/g,'').length >= 7; }
+  function setHint(t){ hint.style.opacity=0; setTimeout(function(){ hint.textContent=t; hint.style.opacity=1; }, 200); }
+  function stopPlaceholder(){ if(pTimer){ clearTimeout(pTimer); pTimer=null; } }
+
+  var stepCfg = {
+    idea:  { type:'text',  ph:'What do you want to create?', btn:'Create &rarr;', hint:HINT_DEFAULT },
+    name:  { type:'text',  ph:'e.g. Alex',                   btn:'Next &rarr;',   hint:'What can we call you, Creator?' },
+    email: { type:'email', ph:'you@email.com',               btn:'Done &rarr;',   hint:'Last one — where should we reach you?' }
+  };
+  function goStep(s){
+    step = s; var cfg = stepCfg[s];
+    stopPlaceholder();
+    input.value=''; input.type=cfg.type; input.placeholder=cfg.ph; btn.innerHTML=cfg.btn; setHint(cfg.hint);
+    examples.style.display = (s==='idea') ? 'flex' : 'none';
+    if(s==='idea') startPlaceholder();
+    input.focus();
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var val = input.value.trim();
+    if(step==='idea'){
+      if(val.length<3){ setHint('Give us a little more to go on…'); return; }
+      lead.idea=val; goStep('name');
+    } else if(step==='name'){
+      if(val.length<1){ setHint('Just a first name is perfect.'); return; }
+      lead.name=val; goStep('email');
+    } else {
+      if(!isEmail(val)){ setHint('That email doesn’t look right — mind checking it?'); return; }
+      lead.email=val;
+      // --- LEAD CAPTURE HOOK ---  POST `lead` {idea,name,email} to your endpoint:
+      // fetch('https://formspree.io/f/YOUR_ID',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(lead)});
+      confirmH.textContent = 'Say no more, ' + lead.name + '.';
+      confirmContact.textContent = 'We’ll reach you at ' + lead.email + '.';
+      stopPlaceholder();
+      createwrap.style.display='none'; confirmCard.style.display='block';
+    }
+  });
+
+  // example chips fill the idea box
+  examples.querySelectorAll('.ex').forEach(function(chip){
+    chip.addEventListener('click', function(){ if(step!=='idea') return; stopPlaceholder(); input.value=chip.textContent; input.focus(); });
+  });
+
+  // rotating hint (idea step only)
+  var hints=[HINT_DEFAULT, 'Don’t know where to start? Just explain your problem and we’ll figure it out.'];
+  var hi=0;
+  setInterval(function(){ if(step!=='idea' || document.activeElement===input) return; hi=(hi+1)%hints.length; setHint(hints[hi]); }, 4200);
+
+  // typewriter placeholder (idea step, empty + unfocused)
+  var prompts=['What do you want to create?','Create me an app that…','I want a tool that…','Solve this problem for me:…','Build a website that…','Automate my…','I have an idea for…'];
+  var pIdx=0;
+  function typeLoop(){
+    var full=prompts[pIdx], i=0;
+    (function typing(){
+      if(step!=='idea' || document.activeElement===input || input.value){ pTimer=setTimeout(typeLoop, 1200); return; }
+      input.placeholder = full.slice(0,i);
+      if(i<full.length){ i++; pTimer=setTimeout(typing, 55); }
+      else { pTimer=setTimeout(function(){ pIdx=(pIdx+1)%prompts.length; typeLoop(); }, 1900); }
+    })();
+  }
+  function startPlaceholder(){ stopPlaceholder(); pTimer=setTimeout(typeLoop, 500); }
+  input.addEventListener('focus', function(){ if(step==='idea'){ stopPlaceholder(); input.placeholder=''; } });
+  input.addEventListener('blur', function(){ if(step==='idea' && !input.value){ startPlaceholder(); } });
+  startPlaceholder();
+
+  // nav: translucent bar once scrolled off the hero
+  var navEl = document.querySelector('nav');
+  function updateBg(){
+    var y = (window.scrollY || window.pageYOffset);
+    if(y > 40){ navEl.classList.add('scrolled'); } else { navEl.classList.remove('scrolled'); }
+  }
+  window.addEventListener('scroll', updateBg, {passive:true});
+  window.addEventListener('resize', updateBg);
+  updateBg();
+
+  startAgain.addEventListener('click', function(){
+    lead={ idea:'', name:'', email:'' };
+    confirmCard.style.display='none'; createwrap.style.display='block';
+    goStep('idea');
+  });
+
+  /* ---------------- LIVE DEMOS ---------------- */
+  var overlay = document.getElementById('modalOverlay');
+  var mTag = document.getElementById('mTag');
+  var mTitle = document.getElementById('mTitle');
+  var mBody = document.getElementById('mBody');
+  var mClose = document.getElementById('mClose');
+
+  var demos = {
+    app: {
+      tag:'Mobile app', title:'TrimTime — barber booking',
+      html:
+        '<div style="display:flex;justify-content:center;">'
+        +'<div style="width:300px;background:#111119;border-radius:36px;padding:12px;box-shadow:0 24px 60px rgba(0,0,0,.35);">'
+        +'<div style="background:#fff;border-radius:26px;overflow:hidden;">'
+        +'<div style="background:linear-gradient(135deg,#5B5BF5,#EC4899,#F59E0B);padding:22px 18px;color:#fff;">'
+        +'<div style="font-size:11px;opacity:.9;letter-spacing:1px;">BOOK YOUR CUT</div>'
+        +'<div style="font-size:22px;font-weight:700;margin-top:3px;">Marcus &middot; Fade Co.</div>'
+        +'<div style="font-size:12px;opacity:.9;margin-top:4px;">&#9733; 4.9 (312) &middot; 0.4 mi away</div></div>'
+        +'<div style="padding:16px 18px;">'
+        +'<div style="font-size:13px;font-weight:600;color:#111;margin-bottom:10px;">Pick a time &mdash; Today</div>'
+        +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="d-slots">'
+        +['9:00','10:30','12:00','1:30','3:00','4:30'].map(function(t){return '<button class="slot" style="border:1px solid #e3e3e8;background:#fff;padding:11px 0;border-radius:10px;font-weight:600;font-size:13px;color:#222;cursor:pointer;">'+t+'</button>';}).join('')
+        +'</div>'
+        +'<button id="d-book" style="margin-top:16px;width:100%;background:#c9ccd6;color:#fff;border:none;padding:14px;border-radius:12px;font-weight:700;font-size:14px;cursor:not-allowed;transition:.2s;">Select a time</button>'
+        +'</div></div></div></div>',
+      init:function(r){
+        var slots=r.querySelectorAll('.slot'), book=r.querySelector('#d-book'), chosen=null;
+        slots.forEach(function(s){ s.onclick=function(){
+          slots.forEach(function(x){x.style.background='#fff';x.style.color='#222';x.style.borderColor='#e3e3e8';});
+          s.style.background='#111';s.style.color='#fff';s.style.borderColor='#111'; chosen=s.textContent;
+          book.textContent='Book '+chosen+' PM'; book.style.background='#111'; book.style.cursor='pointer';
+          book.onclick=function(){ book.textContent='✓ Booked for '+chosen+' PM'; book.style.background='#16a34a'; };
+        };});
+      }
+    },
+    auto: {
+      tag:'Automation', title:'Flow — new-lead automation',
+      html:
+        '<div style="max-width:560px;margin:0 auto;">'
+        +'<div style="text-align:center;font-size:13px;color:#666;margin-bottom:14px;">Runs automatically every time a lead comes in &mdash; ~1.2s</div>'
+        +'<div id="d-steps">'
+        +['New lead captured','Enrich contact details','Notify team in Slack','Add to CRM','Send welcome email'].map(function(t){
+          return '<div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #eee;border-radius:12px;padding:12px 14px;margin-bottom:8px;"><div class="adot" style="width:22px;height:22px;border-radius:50%;border:2px solid #d5d5dd;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;"></div><div style="font-size:13.5px;color:#222;font-weight:500;">'+t+'</div></div>';
+        }).join('')
+        +'</div>'
+        +'<button id="d-run" style="margin-top:8px;width:100%;background:linear-gradient(90deg,#5B5BF5,#EC4899);color:#fff;border:none;padding:14px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;">&#9654;&nbsp; Run automation</button>'
+        +'<div style="text-align:center;margin-top:14px;font-size:12.5px;color:#888;">12,480 tasks run automatically this month</div></div>',
+      init:function(r){
+        var run=r.querySelector('#d-run'), dots=r.querySelectorAll('.adot');
+        run.onclick=function(){
+          run.disabled=true; run.style.opacity=.7; run.textContent='Running…';
+          dots.forEach(function(d,i){ setTimeout(function(){
+            d.style.background='#16a34a'; d.style.borderColor='#16a34a'; d.textContent='✓';
+            if(i===dots.length-1){ run.textContent='✓ Completed'; run.style.background='#16a34a'; run.style.opacity=1;
+              setTimeout(function(){ run.disabled=false; run.innerHTML='&#9654;&nbsp; Run again'; run.style.background='linear-gradient(90deg,#5B5BF5,#EC4899)';
+                dots.forEach(function(x){x.style.background='';x.style.borderColor='#d5d5dd';x.textContent='';}); },1500); }
+          }, 320*(i+1)); });
+        };
+      }
+    },
+    agent: {
+      tag:'AI agent', title:'Ava — AI support agent',
+      html:
+        '<div style="max-width:620px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #eee;">'
+        +'<div style="background:#111119;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;">'
+        +'<div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#5B5BF5,#EC4899,#F59E0B);"></div>'
+        +'<div><div style="font-size:14px;font-weight:600;">Ava</div><div style="font-size:11px;color:#8ee6a8;">&#9679; Online &middot; instant replies</div></div></div>'
+        +'<div id="d-chat" style="padding:16px;height:220px;overflow:auto;background:#F6F6F9;display:flex;flex-direction:column;gap:10px;">'
+        +'<div style="align-self:flex-start;max-width:80%;background:#fff;border:1px solid #eee;padding:10px 13px;border-radius:14px;border-bottom-left-radius:4px;font-size:13.5px;color:#222;">Hi! I\'m Ava. How can I help with your order today?</div>'
+        +'</div>'
+        +'<div id="d-quick" style="padding:12px;border-top:1px solid #eee;display:flex;gap:8px;flex-wrap:wrap;">'
+        +['Where\'s my order?','Start a return','Talk to a human'].map(function(q){return '<button class="q" style="border:1px solid #d9d9e2;background:#fff;color:#5B5BF5;font-weight:600;font-size:12.5px;padding:8px 12px;border-radius:999px;cursor:pointer;">'+q+'</button>';}).join('')
+        +'</div></div>',
+      init:function(r){
+        var chat=r.querySelector('#d-chat');
+        var ans={"Where's my order?":"Order #4821 shipped this morning — it’s out for delivery and should arrive by 6pm today. Want the tracking link?","Start a return":"No problem! I’ve created return label #RT-208 and emailed it to you. Just drop the package at any carrier location within 14 days.","Talk to a human":"Connecting you now — Sam from our team will jump in within 2 minutes. Anything else I can prep for them?"};
+        function add(text, me){ var b=document.createElement('div');
+          b.style.cssText='max-width:80%;padding:10px 13px;border-radius:14px;font-size:13.5px;'+(me?'align-self:flex-end;background:linear-gradient(135deg,#5B5BF5,#EC4899);color:#fff;border-bottom-right-radius:4px;':'align-self:flex-start;background:#fff;border:1px solid #eee;color:#222;border-bottom-left-radius:4px;');
+          b.textContent=text; chat.appendChild(b); chat.scrollTop=chat.scrollHeight; }
+        r.querySelectorAll('.q').forEach(function(btn){ btn.onclick=function(){ var q=btn.textContent; add(q,true);
+          setTimeout(function(){ add(ans[q]||'On it!',false); },550); }; });
+      }
+    },
+    site: {
+      tag:'Web tool', title:'QuickInvoice — instant invoicing',
+      html:
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">'
+        +'<div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #eee;">'
+        +'<div style="font-size:13px;font-weight:700;color:#111;margin-bottom:14px;">Invoice details</div>'
+        +'<label style="font-size:11px;color:#888;font-weight:600;">CLIENT</label><input id="i-client" value="Acme Co." style="width:100%;margin:4px 0 12px;padding:9px 11px;border:1px solid #e2e2ea;border-radius:9px;font-size:13px;">'
+        +'<label style="font-size:11px;color:#888;font-weight:600;">HOURS</label><input id="i-hours" type="number" value="20" style="width:100%;margin:4px 0 12px;padding:9px 11px;border:1px solid #e2e2ea;border-radius:9px;font-size:13px;">'
+        +'<label style="font-size:11px;color:#888;font-weight:600;">RATE ($/HR)</label><input id="i-rate" type="number" value="120" style="width:100%;margin:4px 0 0;padding:9px 11px;border:1px solid #e2e2ea;border-radius:9px;font-size:13px;">'
+        +'</div>'
+        +'<div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #eee;">'
+        +'<div style="font-size:11px;color:#999;">INVOICE #0042</div>'
+        +'<div style="font-size:13px;color:#111;font-weight:600;margin:2px 0 14px;">To: <span id="o-client">Acme Co.</span></div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:13px;color:#555;margin-bottom:6px;"><span>Subtotal</span><span id="o-sub">$2,400</span></div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:13px;color:#555;margin-bottom:10px;"><span>Tax (8%)</span><span id="o-tax">$192</span></div>'
+        +'<div style="border-top:1px solid #eee;padding-top:12px;display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:700;color:#111;">Total</span><span id="o-total" style="font-size:24px;font-weight:700;background:linear-gradient(90deg,#5B5BF5,#EC4899);-webkit-background-clip:text;background-clip:text;color:transparent;">$2,592</span></div>'
+        +'<button id="i-send" style="margin-top:16px;width:100%;background:#111;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;transition:.2s;">Send invoice</button>'
+        +'</div></div>',
+      init:function(r){
+        function money(n){ return '$'+Math.round(n).toLocaleString(); }
+        function upd(){ var h=+r.querySelector('#i-hours').value||0, rt=+r.querySelector('#i-rate').value||0, sub=h*rt, tax=sub*0.08;
+          r.querySelector('#o-client').textContent=r.querySelector('#i-client').value||'Client';
+          r.querySelector('#o-sub').textContent=money(sub); r.querySelector('#o-tax').textContent=money(tax); r.querySelector('#o-total').textContent=money(sub+tax); }
+        ['#i-client','#i-hours','#i-rate'].forEach(function(s){ r.querySelector(s).addEventListener('input',upd); });
+        var send=r.querySelector('#i-send');
+        send.onclick=function(){ send.innerHTML='&#10003; Invoice sent to '+(r.querySelector('#i-client').value||'client'); send.style.background='#16a34a'; setTimeout(function(){ send.textContent='Send invoice'; send.style.background='#111'; }, 2200); };
+      }
+    },
+    data: {
+      tag:'Dashboard', title:'Pulse — revenue dashboard',
+      html:
+        '<div style="max-width:720px;margin:0 auto;">'
+        +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">'
+        +[['Revenue','$48.2k','+12%'],['New users','1,284','+8%'],['Conversion','3.9%','+0.4%']].map(function(k){
+          return '<div style="background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;"><div style="font-size:11px;color:#999;">'+k[0]+'</div><div style="font-size:20px;font-weight:700;color:#111;margin:2px 0;">'+k[1]+'</div><div style="font-size:11px;color:#16a34a;font-weight:600;">'+k[2]+'</div></div>';
+        }).join('')
+        +'</div>'
+        +'<div style="background:#fff;border:1px solid #eee;border-radius:14px;padding:18px;">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div style="font-size:13px;font-weight:700;color:#111;">Revenue by day</div>'
+        +'<div id="d-toggle" style="display:flex;background:#f0f0f4;border-radius:8px;padding:2px;font-size:12px;"><span data-k="7" class="tg" style="padding:5px 10px;border-radius:6px;cursor:pointer;background:#fff;font-weight:600;">7d</span><span data-k="30" class="tg" style="padding:5px 10px;border-radius:6px;cursor:pointer;color:#888;">30d</span></div></div>'
+        +'<div id="d-bars" style="display:flex;align-items:flex-end;gap:8px;height:130px;"></div>'
+        +'</div></div>',
+      init:function(r){
+        var sets={7:[40,62,48,80,72,95,68],30:[55,70,60,85,50,92,78,64,88,72]};
+        var bars=r.querySelector('#d-bars');
+        function draw(k){ bars.innerHTML=sets[k].map(function(v){ return '<div style="flex:1;height:'+v+'%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#7C5BF5,#EC4899);"></div>'; }).join(''); }
+        draw(7);
+        r.querySelectorAll('.tg').forEach(function(t){ t.onclick=function(){
+          r.querySelectorAll('.tg').forEach(function(x){x.style.background='';x.style.color='#888';x.style.fontWeight='400';});
+          t.style.background='#fff'; t.style.color='#111'; t.style.fontWeight='600'; draw(t.getAttribute('data-k')); }; });
+      }
+    },
+    novel: {
+      tag:'Something new', title:'Muse — instant brand generator',
+      html:
+        '<div style="max-width:560px;margin:0 auto;">'
+        +'<div style="font-size:13px;color:#666;margin-bottom:12px;text-align:center;">Describe a vibe. Get a brand in one click.</div>'
+        +'<div style="display:flex;gap:8px;margin-bottom:16px;"><input id="n-in" value="calm, natural skincare" style="flex:1;padding:11px 14px;border:1px solid #e2e2ea;border-radius:11px;font-size:13.5px;"><button id="n-go" style="background:linear-gradient(90deg,#5B5BF5,#EC4899);color:#fff;border:none;padding:11px 18px;border-radius:11px;font-weight:700;font-size:13.5px;cursor:pointer;">Generate</button></div>'
+        +'<div id="n-out"></div></div>',
+      init:function(r){
+        var presets=[
+          {name:'Verda',tag:'Skincare, rooted in nature.',cols:['#3B6E4F','#8FB89A','#EAE3D2']},
+          {name:'Lumen',tag:'Light, effortless routines.',cols:['#2E4A8A','#7FA0E0','#E8EDF7']},
+          {name:'Bloom',tag:'Glow that grows on you.',cols:['#B0446E','#E895B4','#F7E6EE']}
+        ];
+        var i=0, out=r.querySelector('#n-out');
+        function render(){ var p=presets[i%presets.length];
+          out.innerHTML='<div style="background:#fff;border:1px solid #eee;border-radius:16px;padding:22px;text-align:center;animation:modalin .3s;">'
+            +'<div style="font-size:34px;font-weight:700;letter-spacing:-1px;color:#111;">'+p.name+'<span style="color:'+p.cols[0]+';">.</span></div>'
+            +'<div style="font-size:14px;color:#666;margin-top:6px;">'+p.tag+'</div>'
+            +'<div style="display:flex;gap:8px;justify-content:center;margin-top:18px;">'+p.cols.map(function(c){return '<div style="width:38px;height:38px;border-radius:9px;background:'+c+';border:1px solid rgba(0,0,0,.06);"></div>';}).join('')+'</div>'
+            +'</div>'; i++; }
+        render();
+        r.querySelector('#n-go').onclick=render;
+      }
+    },
+    social: {
+      tag:'Social engine', title:'EchoReach — social content engine',
+      html:
+        '<div style="display:grid;grid-template-columns:1fr 1.2fr;gap:16px;">'
+        +'<div style="background:#fff;border-radius:14px;padding:18px;border:1px solid #eee;">'
+        +'<div style="font-size:13px;font-weight:700;color:#111;margin-bottom:12px;">Content engine</div>'
+        +'<label style="font-size:11px;color:#888;font-weight:600;">TOPIC</label>'
+        +'<input id="s-topic" value="our new summer skincare drop" style="width:100%;margin:4px 0 12px;padding:9px 11px;border:1px solid #e2e2ea;border-radius:9px;font-size:13px;">'
+        +'<label style="font-size:11px;color:#888;font-weight:600;">PLATFORM</label>'
+        +'<div style="display:flex;gap:6px;margin:6px 0 14px;flex-wrap:wrap;">'+['Instagram','TikTok','X','LinkedIn'].map(function(p,idx){return '<button class="sp" style="border:1px solid #d9d9e2;background:'+(idx===0?'#111':'#fff')+';color:'+(idx===0?'#fff':'#555')+';font-size:12px;font-weight:600;padding:7px 11px;border-radius:8px;cursor:pointer;">'+p+'</button>';}).join('')+'</div>'
+        +'<button id="s-gen" style="width:100%;background:linear-gradient(90deg,#5B5BF5,#EC4899);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:700;font-size:13.5px;cursor:pointer;">Generate 3 posts</button>'
+        +'<div style="font-size:11.5px;color:#999;margin-top:12px;text-align:center;">1,204 posts published this month</div>'
+        +'</div>'
+        +'<div id="s-out" style="display:flex;flex-direction:column;gap:10px;"></div>'
+        +'</div>',
+      init:function(r){
+        var plats=r.querySelectorAll('.sp');
+        plats.forEach(function(b){ b.onclick=function(){ plats.forEach(function(x){x.style.background='#fff';x.style.color='#555';}); b.style.background='#111'; b.style.color='#fff'; }; });
+        var sets=[
+          ['Summer, meet your skin. Our new lightweight SPF drop is here — hydration that actually lasts all day.','#skincare #summerglow #spf'],
+          ['POV: your skin barrier finally gets a break. New summer line, dropping Friday.','#glowup #cleanbeauty #newdrop'],
+          ['We reformulated everything for summer. Lighter, dewier, sweat-proof. Your move.','#summerskincare #dewyskin #skintok']
+        ];
+        var out=r.querySelector('#s-out'), gen=r.querySelector('#s-gen');
+        function card(txt,tags,likes){ return '<div style="background:#fff;border:1px solid #eee;border-radius:14px;padding:16px;animation:modalin .3s;"><div style="font-size:13.5px;color:#222;line-height:1.5;">'+txt+'</div><div style="font-size:12px;color:#5B5BF5;font-weight:600;margin-top:8px;">'+tags+'</div><div style="display:flex;gap:16px;margin-top:10px;font-size:11.5px;color:#999;"><span>&#9829; '+likes.toLocaleString()+'</span><span>&#8635; '+Math.round(likes/6).toLocaleString()+'</span><span style="color:#16a34a;">Scheduled &#10003;</span></div></div>'; }
+        function go(){ var base=1200+Math.floor(Math.random()*900); out.innerHTML=sets.map(function(s,idx){return card(s[0],s[1], base+idx*137);}).join(''); }
+        gen.onclick=go; go();
+      }
+    }
+  };
+
+  var demoMeta = {
+    app:{cat:'Mobile app',name:'TrimTime',tl:'Book a barber in three taps. Reminders, deposits, and rebooking — all automatic.',accent:'linear-gradient(135deg,#5B5BF5,#EC4899,#F59E0B)',meta:[['Rating','4.9★'],['Bookings','12k/mo'],['Built in','9 days']],feats:[['Native iOS & Android','One build, both app stores.'],['Smart reminders','Cuts no-shows by 40%.'],['Deposits up front','Money in before the chair.']]},
+    auto:{cat:'Automation',name:'Flow',tl:'Every new lead — enriched, routed, and welcomed in 1.2 seconds, with no human touch.',accent:'linear-gradient(135deg,#5B5BF5,#7C5BF5)',meta:[['Tasks/mo','12,480'],['Avg run','1.2s'],['Built in','5 days']],feats:[['Connects everything','CRM, Slack, email, sheets.'],['Runs 24/7','While you sleep.'],['Never drops a lead','Logged, retried, reliable.']]},
+    agent:{cat:'AI agent',name:'Ava',tl:'An AI support agent that answers instantly, day or night, in your brand voice.',accent:'linear-gradient(135deg,#5B5BF5,#EC4899)',meta:[['Resolved','78%'],['Response','instant'],['Built in','7 days']],feats:[['Knows your business','Trained on your docs & orders.'],['Escalates smartly','Hands to a human when needed.'],['Every channel','Web, SMS, WhatsApp, email.']]},
+    site:{cat:'Web tool',name:'QuickInvoice',tl:'Type the details, send a polished invoice, get paid. Tax and totals handled for you.',accent:'linear-gradient(135deg,#2E86F0,#5B5BF5)',meta:[['Invoiced','$2M+'],['To send','30s'],['Built in','4 days']],feats:[['Live preview','What you type is what they get.'],['Auto tax & totals','No math, no mistakes.'],['One-click pay','Stripe & ACH built in.']]},
+    data:{cat:'Dashboard',name:'Pulse',tl:'Every number that matters in one live view your whole team can read at a glance.',accent:'linear-gradient(135deg,#7C5BF5,#EC4899)',meta:[['Sources','12'],['Refresh','live'],['Built in','6 days']],feats:[['Any data source','Stripe, GA, your database.'],['Live & shareable','One link, always current.'],['Smart alerts','Pings you when it matters.']]},
+    novel:{cat:'Something new',name:'Muse',tl:'Describe a vibe, get a full brand — name, tagline, and palette — in a single click.',accent:'linear-gradient(135deg,#A855F7,#F59E0B)',meta:[['Brands','5k+'],['Generate','1 click'],['Built in','8 days']],feats:[['Idea to identity','From a phrase to a look.'],['Endless options','Never run dry.'],['Export ready','Colors, type, done.']]},
+    social:{cat:'Social engine',name:'EchoReach',tl:'An AI engine that writes, designs, and schedules a month of on-brand posts in minutes.',accent:'linear-gradient(135deg,#EC4899,#F59E0B)',meta:[['Posts/mo','1,204'],['Platforms','4'],['Built in','11 days']],feats:[['On-brand, always','Learns your voice and look.'],['Every platform','IG, TikTok, X, LinkedIn.'],['Auto-schedule','Best times, done for you.']]}
+  };
+
+  function openDemo(key){
+    var d=demos[key], m=demoMeta[key]; if(!d) return;
+    mTag.textContent = m ? m.cat : d.tag;
+    mTitle.textContent = m ? m.name : d.title;
+    var hero='', feats='';
+    if(m){
+      hero='<div class="ph-hero" style="background:'+m.accent+';"><div class="cat">'+m.cat+'</div><h1>'+m.name+'</h1><div class="tl">'+m.tl+'</div>'
+        +'<div class="meta">'+m.meta.map(function(x){return '<div><b>'+x[1]+'</b>'+x[0]+'</div>';}).join('')+'</div></div>';
+      feats='<div class="ph-feats">'+m.feats.map(function(f){return '<div class="ph-feat"><div class="ft">'+f[0]+'</div><div class="fd">'+f[1]+'</div></div>';}).join('')+'</div>';
+    }
+    mBody.innerHTML='<div class="ph">'+hero+'<div class="ph-body"><div style="max-width:840px;margin:0 auto;">'+d.html+'</div></div>'+feats+'</div>';
+    overlay.classList.add('open'); document.body.style.overflow='hidden';
+    if(d.init) d.init(mBody);
+  }
+  function closeDemo(){ overlay.classList.remove('open'); document.body.style.overflow=''; mBody.innerHTML=''; }
+
+  document.querySelectorAll('.bcard').forEach(function(c){ c.addEventListener('click', function(){ openDemo(c.getAttribute('data-demo')); }); });
+  mClose.addEventListener('click', closeDemo);
+  var modalCta=document.getElementById('modalCta'); if(modalCta) modalCta.addEventListener('click', closeDemo);
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) closeDemo(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDemo(); });
+})();
+
+/* ---------------- HYPE REEL ---------------- */
+(function(){
+  var phrases=['an app that books your haircuts.','a bot that handles support 24/7.','a tool that writes your invoices.','a dashboard that predicts churn.','an AI that edits your videos.','a store that runs itself.','an agent that books your meetings.','a model trained on your data.'];
+  var el=document.getElementById('reelRot'), i=0;
+  if(el){ setInterval(function(){ el.classList.add('out'); setTimeout(function(){ i=(i+1)%phrases.length; el.textContent=phrases[i]; el.classList.remove('out'); }, 450); }, 3000); }
+})();
+
+/* ---------------- FAQ ACCORDION ---------------- */
+(function(){
+  var items=document.querySelectorAll('#faq .faq-item');
+  items.forEach(function(it){
+    it.querySelector('.faq-q').addEventListener('click', function(){
+      var isOpen=it.classList.contains('open');
+      items.forEach(function(x){ x.classList.remove('open'); });
+      if(!isOpen) it.classList.add('open');
+    });
+  });
+})();
+
+/* ---------------- WEBGL SIGNATURE GRADIENT (smooth, dithered, no banding) ---------------- */
+(function(){
+  var cv = document.getElementById('gl');
+  var gl = cv.getContext('webgl') || cv.getContext('experimental-webgl');
+  var stops = ['#0C0A1A','#221A34','#452050','#7A2E6B','#B84A6E','#E0894F','#C77A6A','#9A6E92','#5E63B0','#33569E','#22346E','#16203F','#0C0A1A'];
+  if(!gl){ // graceful fallback
+    cv.style.background = 'linear-gradient(90deg,'+stops.join(',')+')';
+    return;
+  }
+  // palette as a 512x1 texture
+  var pc = document.createElement('canvas'); pc.width=2048; pc.height=1;
+  var px = pc.getContext('2d');
+  var grad = px.createLinearGradient(0,0,2048,0);
+  stops.forEach(function(c,i){ grad.addColorStop(i/(stops.length-1), c); });
+  px.fillStyle = grad; px.fillRect(0,0,2048,1);
+  var tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,pc);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+
+  var vs = 'attribute vec2 p;varying vec2 uv;void main(){uv=p*0.5+0.5;gl_Position=vec4(p,0.0,1.0);}';
+  var fs = 'precision highp float;varying vec2 uv;uniform sampler2D tex;uniform float t;'
+    + 'float hash(vec2 x){return fract(sin(dot(x,vec2(12.9898,78.233)))*43758.5453);}'
+    + 'void main(){'
+    + ' float pos = uv.x*0.30 + (1.0-uv.y)*0.06 + t;' // small slice = soft single-region wash
+    + ' float o = 0.0009;'                            // multi-tap softening
+    + ' vec3 c = (texture2D(tex,vec2(fract(pos-o),0.5)).rgb + texture2D(tex,vec2(fract(pos),0.5)).rgb + texture2D(tex,vec2(fract(pos+o),0.5)).rgb)/3.0;'
+    + ' c *= 0.97;'                                   // keep it vivid
+    + ' float d = hash(gl_FragCoord.xy + t) - hash(gl_FragCoord.yx*1.31 - t);'
+    + ' c += d/255.0;'                                 // triangular dither fully kills banding
+    + ' gl_FragColor = vec4(c, 1.0);'
+    + '}';
+  function sh(type,src){ var s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s); return s; }
+  var prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  var loc = gl.getAttribLocation(prog,'p');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  var uT = gl.getUniformLocation(prog,'t');
+  gl.uniform1i(gl.getUniformLocation(prog,'tex'), 0);
+
+  function resize(){
+    var dpr = Math.min(window.devicePixelRatio||1, 2);
+    cv.width = Math.floor(window.innerWidth*dpr);
+    cv.height = Math.floor(window.innerHeight*dpr);
+    gl.viewport(0,0,cv.width,cv.height);
+  }
+  resize(); window.addEventListener('resize', resize);
+
+  var start = Date.now();
+  function frame(){
+    var tt = ((Date.now()-start)/1000) * 0.018; // slow one-directional drift
+    gl.uniform1f(uT, tt);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+</script>
+</body>
+</html>
