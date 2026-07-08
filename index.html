@@ -25,7 +25,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Genesis — If you can think it, we can create it.">
 <meta name="twitter:description" content="You bring the idea. We build it with AI. No limits.">
-<meta name="twitter:image" content="https://itsgenesisai.vercel.app/og.png">
+<meta name="twitter:image" content="https://itsgenesisai.vercel.app/og.png"> <script>if('scrollRestoration' in history){history.scrollRestoration='manual';}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -574,8 +574,18 @@
     } else {
       if(!isEmail(val)){ setHint('That email doesn’t look right — mind checking it?'); return; }
       lead.email=val;
-      // --- LEAD CAPTURE HOOK ---  POST `lead` {idea,name,email} to your endpoint:
-      // fetch('https://formspree.io/f/YOUR_ID',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(lead)});
+      fetch('https://api.web3forms.com/submit',{
+        method:'POST',
+        headers:{'Content-Type':'application/json', 'Accept':'application/json'},
+        body:JSON.stringify({
+          access_key:'a27639ef-8fe2-44b1-a088-f3e78d73452a',
+          subject:'New idea from genesis site',
+          from_name:'genesis site',
+          idea:lead.idea,
+          name:lead.name,
+          email:lead.email
+        })
+      });
       confirmH.textContent = 'Say no more, ' + lead.name + '.';
       confirmContact.textContent = 'We’ll reach you at ' + lead.email + '.';
       stopPlaceholder();
@@ -935,5 +945,5 @@
   frame();
 })();
 </script>
-</body>
+<script>window.addEventListener('load',function(){window.scrollTo(0,0);});</script> </body>
 </html>
