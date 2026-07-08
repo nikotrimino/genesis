@@ -66,7 +66,7 @@
   .hero h1{font-size:68px; font-weight:600; letter-spacing:-2.5px; line-height:1.02; text-shadow:0 2px 24px rgba(0,0,0,0.4);}
   .hero .word{font-size:64px; font-weight:600; letter-spacing:-2.5px; margin-bottom:18px;}
   .hero p.sub{font-size:19px; font-weight:400; color:rgba(255,255,255,0.92); margin-top:20px; text-shadow:0 1px 16px rgba(0,0,0,0.4);}
-  @media(max-width:720px){ .hero h1{font-size:42px;} .hero .word{font-size:46px;} }
+  @media(max-width:720px){ .hero h1{font-size:46px;} .hero .word{font-size:40px;} }
 
   /* CREATE BAR */
   .createwrap{margin:44px auto 0; max-width:600px;}
@@ -75,7 +75,7 @@
   .createbar input::placeholder{color:rgba(255,255,255,0.5);}
   .createbar button{background:#fff; color:var(--ink); border:none; font-family:inherit; font-size:15px; font-weight:700; padding:16px 30px; border-radius:12px; cursor:pointer; white-space:nowrap; transition:transform .15s ease;}
   .createbar button:hover{transform:translateY(-1px);}
-  .stephint{font-size:13px; color:rgba(255,255,255,0.6); margin-top:14px; min-height:18px; transition:opacity .35s;}
+  .stephint{font-size:13px; color:rgba(255,255,255,0.6); margin-top:14px; min-height:18px; transition:opacity .35s;} @media(max-width:520px){ .createbar input{font-size:16px;} .createbar button{padding:14px 18px; font-size:14px;} .createbar{padding:8px 8px 8px 18px;} }
   .examples{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:18px; align-items:center;}
   .examples .extag{font-size:12.5px; color:rgba(255,255,255,0.5); margin-right:2px;}
   .examples .ex{background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); color:rgba(255,255,255,0.9); font-family:inherit; font-size:12.5px; padding:7px 13px; border-radius:999px; cursor:pointer; transition:background .2s, border-color .2s, transform .15s;}
@@ -145,7 +145,8 @@
   .ph-feat .ft{font-size:13.5px; font-weight:700; color:#15131c;}
   .ph-feat .fd{font-size:12.5px; color:var(--muted); margin-top:3px;}
   @media(max-width:720px){ .ph-hero,.ph-body,.ph-feats{padding-left:20px; padding-right:20px;} .ph-feats{grid-template-columns:1fr;} .ph-hero h1{font-size:26px;} }
-  .modal-foot{font-size:12.5px; line-height:1.6; color:var(--muted); text-align:center; padding:16px 20px; border-top:1px solid rgba(0,0,0,0.07); background:#fff; flex-shrink:0; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px 6px;}
+  .modal-foot{font-size:12.5px; line-height:1.55; color:var(--muted); text-align:center; padding:18px 20px; border-top:1px solid rgba(0,0,0,0.07); background:#fff; flex-shrink:0;}
+  .modal-foot a{margin-top:12px !important; margin-left:0 !important; display:inline-block;}
   .modal-foot b{color:var(--ink);}
   @media(max-width:560px){ .modal-body{padding:16px;} }
   .bcard h4{font-size:19px; font-weight:600; margin-bottom:7px; letter-spacing:-0.4px; color:#15131c;}
@@ -156,7 +157,7 @@
   .cta{position:relative; overflow:hidden; background:rgba(12,9,24,0.14); color:#fff; text-align:center; padding:120px 28px;}
   .cta .inner{position:relative;}
   .cta h2{font-size:52px; font-weight:600; letter-spacing:-2px; margin-bottom:16px;}
-  .cta p{font-size:18px; color:rgba(255,255,255,0.8); font-weight:300; margin-bottom:36px;}
+  .cta p{font-size:18px; color:rgba(255,255,255,0.8); font-weight:300; margin-bottom:36px;} @media(max-width:520px){ .cta h2{font-size:34px; letter-spacing:-1px;} }
   .cta a.pill{background:#fff; color:#15131c; padding:17px 36px; border-radius:999px; font-weight:600; font-size:16px; display:inline-block; transition:transform .15s ease, opacity .2s ease;}
   .cta a.pill:hover{transform:translateY(-2px); opacity:0.9;}
 
@@ -384,7 +385,7 @@
 <section class="block manifesto">
   <div class="wrap inner">
     <div class="kicker" style="color:rgba(255,255,255,0.6);">The idea</div>
-    <h2>Every great thing starts as an idea. Most die there — not because they were impossible, but because building them seemed too difficult. <em class="gtext">genesis exists to end that.</em></h2>
+    <h2>Every great thing starts as an idea. Most die there — not because they were impossible, but because building them seemed too difficult — <span class="gtext">genesis exists to end that.</span></h2>
   </div>
 </section>
 
